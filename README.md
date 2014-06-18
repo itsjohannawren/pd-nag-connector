@@ -109,6 +109,11 @@ one:
 4. Once the service is created you’ll be taken to the service page. On this
    page you’ll see the **Service API key**; save this because you will need it
    when you configure your Nagios server to send events to PagerDuty.
+5. Setup the webhook for PagerDuty to talk back to Nagios by clicking the
+   **Add Webhook** button, giving the hook a name, and specifying the URL to
+   access `pagerduty.cgi` (will look like
+   `http://example.com/nagios3/cgi-bin/pagerduty.cgi`). If you need HTTP simple
+   auth be sure to specify it in the URL.
 
 ### In Nagios
 
