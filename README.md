@@ -22,7 +22,11 @@ Requirements
 ------------
 
 * Linux
-* Nagios 3.x (Nagwin is **untested**)
+* Nagios
+  * 2.x - Untested
+  * 3.x - Untested
+  * 3.5.x - Tested, Good
+  * 4.0.x - Untested
     
 Installation
 ------------
