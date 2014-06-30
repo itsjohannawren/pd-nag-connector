@@ -8,7 +8,13 @@ Nagios to PagerDuty and to keep alert acknowledgment status in sync.
 Author
 ------
 
-* Jeff Walter (<jeff@404ster.com>, http://jeffw.org/)
+* Jeff Walter (jeff@404ster.com, http://github.com/jeffwalter)
+
+Contributors
+------------
+
+* David Nguyen (d_k_nguyen@yahoo.com, http://github.com/deeno35)
+  * Icinga support ([PR #1](https://github.com/jeffwalter/pd-nag-connector/pull/1))
 
 Copyright and License
 ---------------------
@@ -23,11 +29,10 @@ Requirements
 
 * Linux
 * Nagios
-  * 2.x - Untested
-  * 3.x - Untested
   * 3.5.x - Tested, Good
-  * 4.0.x - Untested
-    
+* Icinga
+  * 1.15 - Tested, Good
+
 Installation
 ------------
 
