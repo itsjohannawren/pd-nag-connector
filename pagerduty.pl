@@ -18,9 +18,7 @@ sub loadEnvironment {
 	foreach $key (keys (%env)) {
 		@entry = ($key);
 
-		if ($entry [0] !~ /^NAGIOS_(\S+)$/i) {
-			next;
-		}
+		next unless ($entry [0] =~ /^NAGIOS_(\S+)$/i) || ($entry[0] =~ /^ICINGA_(\S+)$/i);
 
 		$entry [1] = lc ($1);
 
