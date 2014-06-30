@@ -129,7 +129,7 @@ sub ackHost {
 	}
 
 	# Success! Write the command
-        if ($ACK_TIME = 0) {
+        if ($ACK_TIME == 0) {
 		printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM;%s;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $author, $comment);
         } else {
         	my $ack_epoch = $time + 7200;
@@ -174,7 +174,7 @@ sub ackService {
 	}
 
         # Success! Write the command
-        if ($ACK_TIME = 0) {
+        if ($ACK_TIME == 0) {
 		printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM;%s;%s;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $author, $comment);
         } else {
                 my $ack_epoch = $time + 7200;
