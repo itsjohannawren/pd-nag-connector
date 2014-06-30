@@ -12,7 +12,16 @@ use LWP::UserAgent;
 my $CONFIG = {
 	'command_file' => '/var/lib/nagios3/rw/nagios.cmd', # External commands file
 	'status_file' => '/var/cache/nagios3/status.dat', # Status data file
+        # Below are defaults for icinga on centos 
+	#'command_file' => '/var/spool/icinga/cmd/icinga.cmd', # External commands file
+	#'status_file' => '/var/spool/icinga/status.dat', # Status data file
 };
+
+# Icinga hosts can set an acknowledge with expiration time.  If you want to use it,
+# set ACK_TIME to a value in seconds (ex: 2hrs = 7200).  If you want
+# the ack to be indefinite or are using nagios, leave this set to 0.
+my $ACK_TIME = 0;
+#my $ACK_TIME = 7200;
 
 # =============================================================================
 
@@ -120,7 +129,12 @@ sub ackHost {
 	}
 
 	# Success! Write the command
-	printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM;%s;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $author, $comment);
+        if ($ACK_TIME = 0) {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM;%s;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $author, $comment);
+        } else {
+        	my $ack_epoch = $time + 7200;
+		printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM_EXPIRE;%s;%u;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $ack_epoch, $author, $comment);
+	}
 	# Close the file handle
 	close (NAGIOS);
 
@@ -159,8 +173,14 @@ sub ackService {
 		return (undef, $!);
 	}
 
-	# Success! Write the command
-	printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM;%s;%s;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $author, $comment);
+        # Success! Write the command
+        if ($ACK_TIME = 0) {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM;%s;%s;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $author, $comment);
+        } else {
+                my $ack_epoch = $time + 7200;
+		printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM_EXPIRE;%s;%s;%u;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $ack_epoch, $author, $comment);
+        }
+
 	# Close the file handle
 	close (NAGIOS);
 
