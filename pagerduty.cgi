@@ -10,8 +10,16 @@ use LWP::UserAgent;
 # =============================================================================
 
 my $CONFIG = {
+	# Nagios/Ubuntu defaults
 	'command_file' => '/var/lib/nagios3/rw/nagios.cmd', # External commands file
 	'status_file' => '/var/cache/nagios3/status.dat', # Status data file
+	# Icinga/CentOS defaults
+	#'command_file' => '/var/spool/icinga/cmd/icinga.cmd', # External commands file
+	#'status_file' => '/var/spool/icinga/status.dat', # Status data file
+	# Icinga acknowledgement TTL
+	'ack_ttl' => 0, # Time in seconds the acknowledgement in Icinga last before
+	                # it times out automatically. 0 means the acknowledgement
+	                # never expires. If you're using Nagios this MUST be 0.
 };
 
 # =============================================================================
@@ -120,7 +128,12 @@ sub ackHost {
 	}
 
 	# Success! Write the command
-	printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM;%s;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $author, $comment);
+	if ($CONFIG->{'ack_ttl'} <= 0) {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM;%s;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, $author, $comment);
+
+	} else {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_HOST_PROBLEM_EXPIRE;%s;%u;%u;%u;%u;%s;%s\n", $time, $host, $sticky, $notify, $persistent, ($time + $CONFIG->{'ack_ttl'}), $author, $comment);
+	}
 	# Close the file handle
 	close (NAGIOS);
 
@@ -160,7 +173,13 @@ sub ackService {
 	}
 
 	# Success! Write the command
-	printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM;%s;%s;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $author, $comment);
+	if ($CONFIG->{'ack_ttl'} <= 0) {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM;%s;%s;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, $author, $comment);
+		
+	} else {
+		printf (NAGIOS "[%u] ACKNOWLEDGE_SVC_PROBLEM_EXPIRE;%s;%s;%u;%u;%u;%u;%s;%s\n", $time, $host, $service, $sticky, $notify, $persistent, ($time + $CONFIG->{'ack_ttl'}), $author, $comment);
+	}
+
 	# Close the file handle
 	close (NAGIOS);
 
