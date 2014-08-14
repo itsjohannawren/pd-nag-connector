@@ -183,136 +183,183 @@ sub loadEnvironment {
 	my (%env) = @_;
 	my ($return, $key, @entry);
 
+	# This will be our return structure
 	$return = {};
 
+	# Loop through all the keys in the passed environment variables
 	foreach $key (keys (%env)) {
 		@entry = ($key);
 
+		# Only proceed if this is a Nagios or Icinga variable
 		next unless ($entry [0] =~ /^(?:NAGIOS|ICINGA)_(\S+)$/i);
 
+		# Store the slightly pre-truncated (?) name
 		$entry [1] = lc ($1);
 
+		# These three only have two levels to their name
 		if ($entry [1] =~ /^(ADMIN|MAX|NOTIFICATION)(\S+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = {};
 			}
+			# Store the sub-value in the hash
 			$return->{$entry [1]}->{$entry [2]} = $env {$entry [0]};
 
+		# Arguments are handled slightly differently
 		} elsif ($entry [1] =~ /^(ARG)(\d+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = [];
 			}
+			# Store the sub-value in the hash
 			$return->{$entry [1]}->[$entry [2] - 1] = $env {$entry [0]};
 
+		# Contacts have three (or two) levels
 		} elsif ($entry [1] =~ /^(CONTACT)(\S+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = {};
 			}
 
 			if ($entry [2] =~ /^(ADDRESS)(\d+)$/i) {
+				# Store the pieces of the name
 				$entry [2] = $1;
 				$entry [3] = $2;
 
+				# Make sure a hash exists to write to
 				if (! defined ($return->{$entry [1]}->{$entry [2]})) {
 					$return->{$entry [1]}->{$entry [2]} = [];
 				}
+				# Store the sub-value in the hash
 				$return->{$entry [1]}->{$entry [2]}->[$entry [3]] = $env {$entry [0]};
 
 			} elsif ($entry [2] =~ /^(GROUP)(\S+)$/i) {
+				# Store the pieces of the name
 				$entry [2] = $1;
 				$entry [3] = $2;
 
+				# Make sure a hash exists to write to
 				if (! defined ($return->{$entry [1]}->{$entry [2]})) {
 					$return->{$entry [1]}->{$entry [2]} = {};
 				}
+				# Store the sub-value in the hash
 				$return->{$entry [1]}->{$entry [2]}->{$entry [3]} = $env {$entry [0]};
 
 			} else {
+				# Save any unknown bits just in case
 				$return->{$entry [1]}->{$entry [2]} = $env {$entry [0]};
 			}
 
+		# Host and service also have three (or two) levels
 		} elsif ($entry [1] =~ /^(HOST|SERVICE)(\S+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = {};
 			}
 
 			if ($entry [2] =~ /^(ACK|GROUP|CHECK|NOTIFICATION)(\S+)$/i) {
+				# Store the pieces of the name
 				$entry [2] = $1;
 				$entry [3] = $2;
 
+				# Make sure a hash exists to write to
 				if (! defined ($return->{$entry [1]}->{$entry [2]})) {
 					$return->{$entry [1]}->{$entry [2]} = {};
 				}
+				# Store the sub-value in the hash
 				$return->{$entry [1]}->{$entry [2]}->{$entry [3]} = $env {$entry [0]};
 
 			} else {
+				# Save any unknown bits just in case
 				$return->{$entry [1]}->{$entry [2]} = $env {$entry [0]};
 			}
 
+		# Same goes for Last
 		} elsif ($entry [1] =~ /^(LAST)(\S+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = {};
 			}
 
 			if ($entry [2] =~ /^(HOST|SERVICE)(\S+)$/i) {
+				# Store the pieces of the name
 				$entry [2] = $1;
 				$entry [3] = $2;
 
+				# Make sure a hash exists to write to
 				if (! defined ($return->{$entry [1]}->{$entry [2]})) {
 					$return->{$entry [1]}->{$entry [2]} = {};
 				}
+				# Store the sub-value in the hash
 				$return->{$entry [1]}->{$entry [2]}->{$entry [3]} = $env {$entry [0]};
 
 			} else {
+				# Save any unknown bits just in case
 				$return->{$entry [1]}->{$entry [2]} = $env {$entry [0]};
 			}
 
+		# And Total as well
 		} elsif ($entry [1] =~ /^(TOTAL)(\S+)$/i) {
+			# Store the pieces of the name
 			$entry [1] = $1;
 			$entry [2] = $2;
 
+			# Make sure a hash exists to write to
 			if (! defined ($return->{$entry [1]})) {
 				$return->{$entry [1]} = {};
 			}
 
 			if ($entry [2] =~ /^(HOSTS|HOST|SERVICES|SERVICE)(\S+)$/i) {
+				# Store the pieces of the name
 				$entry [2] = $1;
 				$entry [3] = $2;
 
+				# Make sure a hash exists to write to
 				if (! defined ($return->{$entry [1]}->{$entry [2]})) {
 					$return->{$entry [1]}->{$entry [2]} = {};
 				}
+				# Store the sub-value in the hash
 				$return->{$entry [1]}->{$entry [2]}->{$entry [3]} = $env {$entry [0]};
 
 			} else {
+				# Save any unknown bits just in case
 				$return->{$entry [1]}->{$entry [2]} = $env {$entry [0]};
 			}
 
 		} else {
+			# Save any unknown bits just in case
 			$return->{lc ($entry [1])} = $env {$entry [0]};
 		}
 	}
 
+	# Set the type to host initially
 	$return->{'type'} = 'host';
 	if ($return->{'last'} && $return->{'last'}->{'service'} && $return->{'last'}->{'service'}->{'check'}) {
+		# Appears to be a service so override the type
 		$return->{'type'} = 'service';
 	}
 
+	# Return a giant structure
 	return ($return);
 }
 
@@ -321,7 +368,9 @@ sub loadEnvironment {
 sub enqueueEvent {
 	my ($event, $nagios, $file);
 
+	# Create an object of our environment
 	$nagios = loadEnvironment (%ENV);
+	# Create the base return structure
 	$event = {
 		'service_key' => $nagios->{'contact'}->{'pager'},
 		'incident_key' => undef,
