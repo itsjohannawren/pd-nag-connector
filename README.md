@@ -47,6 +47,8 @@ be sure the following settings have the required value:
 * `check_external_commands = 1` to enabled external commands.
 * `command_check_interval = -1` to check for external commands as often as
   possible.
+* `enable_environment_macros = 1` to pass the required information to the
+  external command.
 
 Remember to restart Nagios if you made any changes.
 
