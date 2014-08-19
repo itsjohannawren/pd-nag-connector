@@ -203,23 +203,19 @@ if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notificati
 			': ' .
 			$nagios->{'host'}->{'name'} .
 			' reports ' .
-			$nagios->{'host'}->{'output'} .
-			' (' .
-			$nagios->{'host'}->{'check'}->{'command'} .
-			')';
+			$nagios->{'host'}->{'output'};
 
 	} elsif ($nagios->{'type'} eq 'service') {
 		$event->{'description'} =
 			$nagios->{'service'}->{'state'} .
 			': ' .
+			$nagios->{'service'}->{'notes'} .
+            ' ' .
 			($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
 			' on ' .
 			$nagios->{'host'}->{'name'} .
 			' reports ' .
-			$nagios->{'service'}->{'output'} .
-			' (' .
-			$nagios->{'service'}->{'check'}->{'command'} .
-			')';
+			$nagios->{'service'}->{'output'};
 	}
 
 } elsif ($nagios->{'notification'}->{'type'} eq 'ACKNOWLEDGEMENT') {
