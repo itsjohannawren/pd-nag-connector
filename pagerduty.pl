@@ -220,7 +220,7 @@ if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notificati
 
 } elsif ($nagios->{'notification'}->{'type'} eq 'ACKNOWLEDGEMENT') {
     # ignore acknowledgements originating from PagerDuty to avoid feedback loop
-    if ($nagios->{'notification'}->{'comment'} !~ / by PagerDuty\s*$/) {
+    if ($nagios->{'notification'}->{'comment'} !~ / by PagerDuty$/) {
         $event->{'event_type'} = 'acknowledge';
 
         if ($nagios->{'type'} eq 'host') {
