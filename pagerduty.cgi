@@ -11,8 +11,10 @@ use LWP::UserAgent;
 
 my $CONFIG = {
 	# Nagios/Ubuntu defaults
-	'command_file' => '/var/lib/nagios3/rw/nagios.cmd', # External commands file
-	'status_file' => '/var/cache/nagios3/status.dat', # Status data file
+	'command_file' => '/var/log/nagios/rw/nagios.cmd', # External commands file
+	'status_file'  => '/var/log/nagios/tmpfs/status.dat', # Status data file
+	'downtime'     => 86400, # Time in seconds to put host/service in downtime,
+                             # following a resolution
 	# Icinga/CentOS defaults
 	#'command_file' => '/var/spool/icinga/cmd/icinga.cmd', # External commands file
 	#'status_file' => '/var/spool/icinga/status.dat', # Status data file
@@ -118,6 +120,27 @@ sub problemToHostService {
 
 # =============================================================================
 
+sub downtimeHost {
+	my ($time, $host, $start, $end, $fixed, $trigger_id, $duration, $author, $comment) = @_;
+
+	# Open the external commands file
+	if (! open (NAGIOS, '>>', $CONFIG->{'command_file'})) {
+		# Well shizzle
+		return (undef, $!);
+	}
+
+	# Success! Write the command
+	printf (NAGIOS "[%u] SCHEDULE_HOST_DOWNTIME;%s;%u;%u;%u;%u;%u;%s;%s\n", $time, $host, $start, $end, $fixed, $trigger_id, $duration, $author, $comment);
+
+	# Close the file handle
+	close (NAGIOS);
+
+	# Return with happiness
+	return (1, undef);
+}
+
+# =============================================================================
+
 sub ackHost {
 	my ($time, $host, $comment, $author, $sticky, $notify, $persistent) = @_;
 
@@ -154,6 +177,27 @@ sub deackHost {
 
 	# Success! Write the command
 	printf (NAGIOS "[%u] REMOVE_HOST_ACKNOWLEDGEMENT;%s\n", $time, $host);
+	# Close the file handle
+	close (NAGIOS);
+
+	# Return with happiness
+	return (1, undef);
+}
+
+# =============================================================================
+
+sub downtimeService {
+	my ($time, $host, $service, $start, $end, $fixed, $trigger_id, $duration, $author, $comment) = @_;
+
+	# Open the external commands file
+	if (! open (NAGIOS, '>>', $CONFIG->{'command_file'})) {
+		# Well shizzle
+		return (undef, $!);
+	}
+
+	# Success! Write the command
+	printf (NAGIOS "[%u] SCHEDULE_SVC_DOWNTIME;%s;%s;%u;%u;%u;%u;%u;%s;%s\n", $time, $host, $service, $start, $end, $fixed, $trigger_id, $duration, $author, $comment);
+
 	# Close the file handle
 	close (NAGIOS);
 
@@ -237,7 +281,8 @@ $return = {
 };
 
 MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
-	my ($hostservice, $status, $error);
+	my ($hostservice, $status, $error, $author);
+    $author = 'PagerDuty';
 
 	if ((ref ($message) ne 'HASH') || ! defined ($message->{'type'})) {
 		next MESSAGE;
@@ -249,12 +294,13 @@ MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
 		next MESSAGE;
 	}
 
+    $author = $message->{'data'}->{'incident'}->{'last_status_change_by'}->{'name'};
 	if ($message->{'type'} eq 'incident.acknowledge') {
 		if (! defined ($hostservice->{'service'})) {
-			($status, $error) = ackHost ($TIME, $hostservice->{'host'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
+			($status, $error) = ackHost ($TIME, $hostservice->{'host'}, 'Acknowledged by PagerDuty', $author, 2, 0, 0);
 
 		} else {
-			($status, $error) = ackService ($TIME, $hostservice->{'host'}, $hostservice->{'service'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
+			($status, $error) = ackService ($TIME, $hostservice->{'host'}, $hostservice->{'service'}, 'Acknowledged by PagerDuty', $author, 2, 1, 1);
 		}
 
 		$return->{'messages'}{$message->{'id'}} = {
@@ -262,6 +308,23 @@ MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
 			'message' => ($error ? $error : undef)
 		};
 
+	} elsif ($message->{'type'} eq 'incident.resolve') {
+        # If the API resolved the incident (e.g., Nagios), 'resolved_by_user'
+        # will be null. We don't want to downtime the host/service in that
+        # case.
+        if (defined $message->{'data'}->{'incident'}->{'resolved_by_user'}) {
+            if (! defined ($hostservice->{'service'})) {
+                ($status, $error) = downtimeHost ($TIME, $hostservice->{'host'}, $TIME, $TIME + $CONFIG->{'downtime'}, 1, 0, $CONFIG->{'downtime'}, $author, 'Resolved by PagerDuty');
+
+            } else {
+                ($status, $error) = downtimeService ($TIME, $hostservice->{'host'}, $hostservice->{'service'}, $TIME, $TIME + $CONFIG->{'downtime'}, 1, 0, $CONFIG->{'downtime'}, $author, 'Resolved by PagerDuty');
+            }
+
+            $return->{'messages'}{$message->{'id'}} = {
+                'status' => ($status ? 'okay' : 'fail'),
+                'message' => ($error ? $error : undef)
+            };
+        }
 	} elsif ($message->{'type'} eq 'incident.unacknowledge') {
 		if (! defined ($hostservice->{'service'})) {
 			($status, $error) = deackHost ($TIME, $hostservice->{'host'});
