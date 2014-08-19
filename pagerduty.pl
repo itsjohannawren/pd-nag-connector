@@ -219,30 +219,33 @@ if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notificati
 	}
 
 } elsif ($nagios->{'notification'}->{'type'} eq 'ACKNOWLEDGEMENT') {
-	$event->{'event_type'} = 'acknowledge';
+    # ignore acknowledgements originating from PagerDuty to avoid feedback loop
+    if ($nagios->{'notification'}->{'comment'} !~ / by PagerDuty\s*$/) {
+        $event->{'event_type'} = 'acknowledge';
 
-	if ($nagios->{'type'} eq 'host') {
-		$event->{'description'} =
-			$nagios->{'host'}->{'state'} .
-			' for ' .
-			$nagios->{'host'}->{'name'} .
-			' acknowledged by ' .
-			$nagios->{'notification'}->{'author'} .
-			' saying ' .
-			$nagios->{'notification'}->{'comment'};
+        if ($nagios->{'type'} eq 'host') {
+            $event->{'description'} =
+                $nagios->{'host'}->{'state'} .
+                ' for ' .
+                $nagios->{'host'}->{'name'} .
+                ' acknowledged by ' .
+                $nagios->{'notification'}->{'author'} .
+                ' saying ' .
+                $nagios->{'notification'}->{'comment'};
 
-	} elsif ($nagios->{'type'} eq 'service') {
-		$event->{'description'} =
-			$nagios->{'service'}->{'state'} .
-			' for ' .
-			($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
-			' on ' .
-			$nagios->{'host'}->{'name'} .
-			' acknowledged by ' .
-			$nagios->{'notification'}->{'author'} .
-			' saying ' .
-			$nagios->{'notification'}->{'comment'};
-	}
+        } elsif ($nagios->{'type'} eq 'service') {
+            $event->{'description'} =
+                $nagios->{'service'}->{'state'} .
+                ' for ' .
+                ($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
+                ' on ' .
+                $nagios->{'host'}->{'name'} .
+                ' acknowledged by ' .
+                $nagios->{'notification'}->{'author'} .
+                ' saying ' .
+                $nagios->{'notification'}->{'comment'};
+        }
+    }
 
 } else {
 	exit (0);
