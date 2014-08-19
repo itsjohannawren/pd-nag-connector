@@ -203,50 +203,49 @@ if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notificati
 			': ' .
 			$nagios->{'host'}->{'name'} .
 			' reports ' .
-			$nagios->{'host'}->{'output'} .
-			' (' .
-			$nagios->{'host'}->{'check'}->{'command'} .
-			')';
+			$nagios->{'host'}->{'output'};
 
 	} elsif ($nagios->{'type'} eq 'service') {
 		$event->{'description'} =
 			$nagios->{'service'}->{'state'} .
 			': ' .
+			$nagios->{'service'}->{'notes'} .
+            ' ' .
 			($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
 			' on ' .
 			$nagios->{'host'}->{'name'} .
 			' reports ' .
-			$nagios->{'service'}->{'output'} .
-			' (' .
-			$nagios->{'service'}->{'check'}->{'command'} .
-			')';
+			$nagios->{'service'}->{'output'};
 	}
 
 } elsif ($nagios->{'notification'}->{'type'} eq 'ACKNOWLEDGEMENT') {
-	$event->{'event_type'} = 'acknowledge';
+    # ignore acknowledgements originating from PagerDuty to avoid feedback loop
+    if ($nagios->{'notification'}->{'comment'} !~ / by PagerDuty$/) {
+        $event->{'event_type'} = 'acknowledge';
 
-	if ($nagios->{'type'} eq 'host') {
-		$event->{'description'} =
-			$nagios->{'host'}->{'state'} .
-			' for ' .
-			$nagios->{'host'}->{'name'} .
-			' acknowledged by ' .
-			$nagios->{'notification'}->{'author'} .
-			' saying ' .
-			$nagios->{'notification'}->{'comment'};
+        if ($nagios->{'type'} eq 'host') {
+            $event->{'description'} =
+                $nagios->{'host'}->{'state'} .
+                ' for ' .
+                $nagios->{'host'}->{'name'} .
+                ' acknowledged by ' .
+                $nagios->{'notification'}->{'author'} .
+                ' saying ' .
+                $nagios->{'notification'}->{'comment'};
 
-	} elsif ($nagios->{'type'} eq 'service') {
-		$event->{'description'} =
-			$nagios->{'service'}->{'state'} .
-			' for ' .
-			($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
-			' on ' .
-			$nagios->{'host'}->{'name'} .
-			' acknowledged by ' .
-			$nagios->{'notification'}->{'author'} .
-			' saying ' .
-			$nagios->{'notification'}->{'comment'};
-	}
+        } elsif ($nagios->{'type'} eq 'service') {
+            $event->{'description'} =
+                $nagios->{'service'}->{'state'} .
+                ' for ' .
+                ($nagios->{'service'}->{'displayname'} ? $nagios->{'service'}->{'displayname'} : $nagios->{'service'}->{'desc'}) .
+                ' on ' .
+                $nagios->{'host'}->{'name'} .
+                ' acknowledged by ' .
+                $nagios->{'notification'}->{'author'} .
+                ' saying ' .
+                $nagios->{'notification'}->{'comment'};
+        }
+    }
 
 } else {
 	exit (0);
