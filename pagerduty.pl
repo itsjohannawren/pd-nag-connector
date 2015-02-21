@@ -178,20 +178,9 @@ if (! defined ($event->{'client_url'})) {
 }
 
 if ($nagios->{'type'} eq 'host') {
-	if ($nagios->{'notification'}->{'type'} eq 'RECOVERY') {
-		$event->{'incident_key'} = $nagios->{'last'}->{'host'}->{'problemid'};
-
-	} else {
-		$event->{'incident_key'} = $nagios->{'host'}->{'problemid'};
-	}
-
+	$event->{'incident_key'} = "event_source=host;host_name=" . $nagios->{'host'}->{'name'};
 } elsif ($nagios->{'type'} eq 'service') {
-	if ($nagios->{'notification'}->{'type'} eq 'RECOVERY') {
-		$event->{'incident_key'} = $nagios->{'last'}->{'service'}->{'problemid'};
-
-	} else {
-		$event->{'incident_key'} = $nagios->{'service'}->{'problemid'};
-	}
+	$event->{'incident_key'} = "event_source=service;host_name=" . $nagios->{'host'}->{'name'} . "service_desc=" . $nagios->{'service'}->{'desc'};
 }
 
 if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notification'}->{'type'} eq 'RECOVERY')) {
