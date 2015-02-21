@@ -177,10 +177,13 @@ if (! defined ($event->{'client_url'})) {
 	delete ($event->{'client_url'});
 }
 
+$nagios->{'HOSTNAME'} = $nagios->{'host'}->{'name'};
+
 if ($nagios->{'type'} eq 'host') {
 	$event->{'incident_key'} = "event_source=host;host_name=" . $nagios->{'host'}->{'name'};
 } elsif ($nagios->{'type'} eq 'service') {
 	$event->{'incident_key'} = "event_source=service;host_name=" . $nagios->{'host'}->{'name'} . ";service_desc=" . $nagios->{'service'}->{'desc'};
+	$nagios->{'SERVICEDESC'} = $nagios->{'service'}->{'desc'};
 }
 
 if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notification'}->{'type'} eq 'RECOVERY')) {
