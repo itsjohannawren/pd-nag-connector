@@ -12,10 +12,8 @@ use LWP::UserAgent;
 my $CONFIG = {
 	# Nagios/Ubuntu defaults
 	'command_file' => '/var/lib/nagios3/rw/nagios.cmd', # External commands file
-	'status_file' => '/var/cache/nagios3/status.dat', # Status data file
 	# Icinga/CentOS defaults
 	#'command_file' => '/var/spool/icinga/cmd/icinga.cmd', # External commands file
-	#'status_file' => '/var/spool/icinga/status.dat', # Status data file
 	# Icinga acknowledgement TTL
 	'ack_ttl' => 0, # Time in seconds the acknowledgement in Icinga last before
 	                # it times out automatically. 0 means the acknowledgement
