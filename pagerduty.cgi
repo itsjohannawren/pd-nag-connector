@@ -154,7 +154,7 @@ MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
 	}
 
 	if ($message->{'type'} eq 'incident.acknowledge') {
-		if (! defined ($hostservice->{'SERVICEDESC'})) {
+                if ($hostservice->{'SERVICEDESC'} eq "") {
 			($status, $error) = ackHost ($TIME, $hostservice->{'HOSTNAME'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
 
 		} else {
