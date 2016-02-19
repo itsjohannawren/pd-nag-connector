@@ -12,109 +12,13 @@ use LWP::UserAgent;
 my $CONFIG = {
 	# Nagios/Ubuntu defaults
 	'command_file' => '/var/lib/nagios3/rw/nagios.cmd', # External commands file
-	'status_file' => '/var/cache/nagios3/status.dat', # Status data file
 	# Icinga/CentOS defaults
 	#'command_file' => '/var/spool/icinga/cmd/icinga.cmd', # External commands file
-	#'status_file' => '/var/spool/icinga/status.dat', # Status data file
 	# Icinga acknowledgement TTL
 	'ack_ttl' => 0, # Time in seconds the acknowledgement in Icinga last before
 	                # it times out automatically. 0 means the acknowledgement
 	                # never expires. If you're using Nagios this MUST be 0.
 };
-
-# =============================================================================
-
-sub problemToHostService {
-	my ($problemID) = @_;
-	my ($line, $result, $type, $section, $problems);
-
-	$result = {};
-	$problems = {};
-
-	if (! open (STATUS, '<', $CONFIG->{'status_file'})) {
-		return (undef, $!);
-	}
-
-	while ($line = <STATUS>) {
-		$line =~ s/(\r\n|\n\r|\n|\r)//ms;
-		$line =~ s/#.*//;
-		$line =~ s/^\s+//;
-		$line =~ s/\s+$//;
-
-		if ($line =~ /^([a-z0-9_-]+)\s*\{$/i) {
-			$type = lc ($1);
-			#if (! defined ($result->{$type})) {
-			#	$result->{$type} = {};
-			#}
-			$section = {};
-
-		} elsif ($line =~ /^\}$/) {
-			if ($type eq 'info') {
-				#$result->{$type} = $section;
-
-			} elsif ($type eq 'programstatus') {
-				#$result->{$type} = $section;
-
-			} elsif ($type eq 'hoststatus') {
-				#$result->{$type}->{$section->{'host_name'}} = $section;
-
-				if (defined ($section->{'current_problem_id'}) && $section->{'current_problem_id'}) {
-					$problems->{$section->{'current_problem_id'} . ''} = {
-						'host' => $section->{'host_name'},
-					};
-				}
-				if (defined ($section->{'last_problem_id'}) && $section->{'last_problem_id'}) {
-					$problems->{$section->{'last_problem_id'} . ''} = {
-						'host' => $section->{'host_name'},
-					};
-				}
-
-			} elsif ($type eq 'servicestatus') {
-				#if (! defined ($result->{$type}->{$section->{'host_name'}})) {
-				#	$result->{$type}->{$section->{'host_name'}} = {};
-				#}
-				#$result->{$type}->{$section->{'host_name'}}->{$section->{'service_description'}} = $section;
-
-				if (defined ($section->{'current_problem_id'}) && $section->{'current_problem_id'}) {
-					$problems->{$section->{'current_problem_id'} . ''} = {
-						'host' => $section->{'host_name'},
-						'service' => $section->{'service_description'},
-					};
-				}
-				if (defined ($section->{'last_problem_id'}) && $section->{'last_problem_id'}) {
-					$problems->{$section->{'last_problem_id'} . ''} = {
-						'host' => $section->{'host_name'},
-						'service' => $section->{'service_description'},
-					};
-				}
-
-			} elsif ($type eq 'contactstatus') {
-				#$result->{$type}->{$section->{'contact_name'}} = $section;
-
-			} elsif ($type eq 'hostcomment') {
-				#$result->{$type}->{$section->{'host_name'}} = $section;
-
-			} elsif ($type eq 'servicecomment') {
-				#if (! defined ($result->{$type}->{$section->{'host_name'}})) {
-				#	$result->{$type}->{$section->{'host_name'}} = {};
-				#}
-				#$result->{$type}->{$section->{'host_name'}}->{$section->{'service_description'}} = $section;
-			}
-
-			$section = {};
-
-		} elsif ($line =~ /^([a-z0-9_-]+)\s*=\s*(\S.*)$/) {
-			# Value
-			$section->{lc ($1)} = $2;
-		}
-	}
-
-	if (defined ($problems->{$problemID . ''})) {
-		return ($problems->{$problemID . ''});
-	}
-
-	return (undef);
-}
 
 # =============================================================================
 
@@ -243,18 +147,18 @@ MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
 		next MESSAGE;
 	}
 
-	$hostservice = problemToHostService ($message->{'data'}->{'incident'}->{'incident_key'});
+	$hostservice = $message->{'data'}->{'incident'}->{'trigger_summary_data'};
 
 	if (! defined ($hostservice)) {
 		next MESSAGE;
 	}
 
 	if ($message->{'type'} eq 'incident.acknowledge') {
-		if (! defined ($hostservice->{'service'})) {
-			($status, $error) = ackHost ($TIME, $hostservice->{'host'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
+                if ($hostservice->{'SERVICEDESC'} eq "") {
+			($status, $error) = ackHost ($TIME, $hostservice->{'HOSTNAME'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
 
 		} else {
-			($status, $error) = ackService ($TIME, $hostservice->{'host'}, $hostservice->{'service'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
+			($status, $error) = ackService ($TIME, $hostservice->{'HOSTNAME'}, $hostservice->{'SERVICEDESC'}, 'Acknowledged by PagerDuty', 'PagerDuty', 2, 0, 0);
 		}
 
 		$return->{'messages'}{$message->{'id'}} = {
@@ -263,11 +167,11 @@ MESSAGE: foreach $message (@{$JSON->{'messages'}}) {
 		};
 
 	} elsif ($message->{'type'} eq 'incident.unacknowledge') {
-		if (! defined ($hostservice->{'service'})) {
-			($status, $error) = deackHost ($TIME, $hostservice->{'host'});
+		if (! defined ($hostservice->{'SERVICEDESC'})) {
+			($status, $error) = deackHost ($TIME, $hostservice->{'HOSTNAME'});
 
 		} else {
-			($status, $error) = deackService ($TIME, $hostservice->{'host'}, $hostservice->{'service'});
+			($status, $error) = deackService ($TIME, $hostservice->{'HOSTNAME'}, $hostservice->{'SERVICEDESC'});
 		}
 
 		$return->{'messages'}->{$message->{'id'}} = {

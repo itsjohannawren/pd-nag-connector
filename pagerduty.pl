@@ -177,21 +177,16 @@ if (! defined ($event->{'client_url'})) {
 	delete ($event->{'client_url'});
 }
 
+## Make sure PagerDuty has the hostname to display on an incident from a Nagios-based service integration
+$nagios->{'HOSTNAME'} = $nagios->{'host'}->{'name'};
+
 if ($nagios->{'type'} eq 'host') {
-	if ($nagios->{'notification'}->{'type'} eq 'RECOVERY') {
-		$event->{'incident_key'} = $nagios->{'last'}->{'host'}->{'problemid'};
-
-	} else {
-		$event->{'incident_key'} = $nagios->{'host'}->{'problemid'};
-	}
-
+	$event->{'incident_key'} = "event_source=host;host_name=" . $nagios->{'host'}->{'name'};
 } elsif ($nagios->{'type'} eq 'service') {
-	if ($nagios->{'notification'}->{'type'} eq 'RECOVERY') {
-		$event->{'incident_key'} = $nagios->{'last'}->{'service'}->{'problemid'};
-
-	} else {
-		$event->{'incident_key'} = $nagios->{'service'}->{'problemid'};
-	}
+	$event->{'incident_key'} = "event_source=service;host_name=" . $nagios->{'host'}->{'name'} . ";service_desc=" . $nagios->{'service'}->{'desc'};
+	## Make sure PagerDuty has the service information to display on an incident from a Nagios-based service integration
+	$nagios->{'SERVICEDESC'} = $nagios->{'service'}->{'desc'};
+	$nagios->{'SERVICESTATE'} = $nagios->{'service'}->{'state'};
 }
 
 if (($nagios->{'notification'}->{'type'} eq 'PROBLEM') || ($nagios->{'notification'}->{'type'} eq 'RECOVERY')) {
